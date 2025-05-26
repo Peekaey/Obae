@@ -29,4 +29,4 @@ Automates the process of downloading beatmaps and extracting the artwork. Only k
 - **A:** The session cookie needs to be provided each time the application is started as the cookie is not stored by default. There is an option in the settings to save this cookie 
   to a json config file for the application to read and load automatically on startup. 
 
-Made with [Avalonia UI](https://avaloniaui.net/).
+Made with [Avalonia UI](https://avaloniaui.net/) & [Playwright](https://playwright.dev/).
