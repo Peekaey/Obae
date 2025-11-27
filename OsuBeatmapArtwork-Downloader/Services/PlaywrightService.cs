@@ -15,10 +15,21 @@ public class PlaywrightService : IPlaywrightService
     public async Task<PlaywrightServiceResult> DownloadBeatmap(string url, UserCookie userCookie, string downloadPath)
     {
         var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        IBrowser? browser = null;
+        //TODO If application hangs on Downloading Beatmap, Playwright probably not been ininitialised properly
+        //Ensure that that playwright.ps1 script is executed - install powershell if on macos to execute
+        try
         {
-            Headless = true
-        });
+            browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            {
+                Headless = true
+            });
+        }
+        catch (Exception e)
+        {
+            return PlaywrightServiceResult.AsFailure("Crashed when attempting to launch chromium browser. Please ensure that Playwright has been installed correctly" +
+                                                     "and that the Playwright.ps1 script has been executed - https://playwright.dev/dotnet/docs/intro");
+        }
 
         // Create a new context
         var context = await browser.NewContextAsync(new BrowserNewContextOptions { AcceptDownloads = true });
