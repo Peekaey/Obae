@@ -1,0 +1,139 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Obae.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" 
+        d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="Obae.Views.Settings.SettingsWindow"
+        x:DataType="vm:SettingsWindowViewModel"
+        Height="500"
+        Width="500"
+        Title="Settings"
+        CanResize="False"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome">
+
+  <Design.DataContext>
+    <vm:SettingsWindowViewModel/>
+  </Design.DataContext>
+
+  <!-- Layered Grid: Background acrylic and foreground interactive content -->
+  <Grid>
+    <!-- Acrylic Background Layer (non-interactive) -->
+    <ExperimentalAcrylicBorder IsHitTestVisible="False">
+      <ExperimentalAcrylicBorder.Material>
+        <ExperimentalAcrylicMaterial BackgroundSource="Digger"
+                                     TintColor="{DynamicResource AcrylicBackgroundColor}"
+                                     TintOpacity="1"
+                                     MaterialOpacity="0.65" />
+      </ExperimentalAcrylicBorder.Material>
+    </ExperimentalAcrylicBorder>
+
+    <!-- Foreground Content Layer -->
+    <DockPanel>
+      <!-- Acrylic Title Bar -->
+      <ExperimentalAcrylicBorder DockPanel.Dock="Top" Height="40">
+        <ExperimentalAcrylicBorder.Material>
+          <ExperimentalAcrylicMaterial BackgroundSource="Digger"
+                                       TintColor="{DynamicResource AcrylicBackgroundColor}"
+                                       TintOpacity="1"
+                                       MaterialOpacity="0.65" />
+        </ExperimentalAcrylicBorder.Material>
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <!-- Draggable Area -->
+          <Border Background="Transparent"
+                  VerticalAlignment="Center"
+                  PointerPressed="StatusBar_OnBarPressed">
+            <TextBlock Text="Settings" 
+                       VerticalAlignment="Center" 
+                       Margin="10,0"
+                       Foreground="{DynamicResource PrimaryForegroundBrush}"/>
+          </Border>
+          <!-- Window Button (Close) -->
+          <StackPanel Orientation="Horizontal"
+                      Grid.Column="1"
+                      VerticalAlignment="Center"
+                      Margin="0,0,10,0">
+            <Button Width="30" Height="25" Click="Close"
+                    Background="Transparent">
+              <Path Data="{StaticResource CloseIcon}"
+                    Stroke="{DynamicResource PrimaryForegroundColor}"
+                    StrokeThickness="1.06"
+                    Stretch="Uniform"
+                    VerticalAlignment="Center"/>
+            </Button>
+          </StackPanel>
+        </Grid>
+      </ExperimentalAcrylicBorder>
+
+      <!-- Main Settings Content -->
+      <Grid Margin="20" Background="Transparent">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Vertical" Margin="0,5">
+          <TextBlock Text="Default Download Working Directory" 
+                     VerticalAlignment="Center"
+                     HorizontalAlignment="Center"
+                     Foreground="{DynamicResource PrimaryForegroundBrush}"
+                     Margin="0,0,10,0" />
+          <TextBox Text="{Binding DefaultFolderPath, Mode=TwoWay}"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Stretch"
+                   IsReadOnly="True"
+                   TextAlignment="Center"/>
+        </StackPanel>
+        
+        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,5">
+          <TextBlock Text="Osu Session Cookie Value" 
+                     VerticalAlignment="Center"
+                     HorizontalAlignment="Center"
+                     Foreground="{DynamicResource PrimaryForegroundBrush}"
+                     Margin="0,0,10,0" />
+          <TextBox Text="{Binding OsuSessionCookieValue, Mode=TwoWay}"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Stretch"
+                   TextAlignment="Center"/>
+        </StackPanel>
+        
+        <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,5">
+          <TextBlock Text="Save Theme and Cookie to cookie.json in Default Directory"
+                     VerticalAlignment="Center"
+                     HorizontalAlignment="Center"
+                     Margin="0,0,10,0" 
+                     Foreground="{DynamicResource PrimaryForegroundColor}"/>
+          <CheckBox IsChecked="{Binding SaveSettingsToConfigFile , Mode=TwoWay}"
+                    BorderBrush="{DynamicResource CheckBoxBorderBrush}"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"/>
+        </StackPanel>
+        
+        <StackPanel Grid.Row="3" Orientation="Vertical" Margin="0,10" VerticalAlignment="Center">
+          <TextBlock Text="Theme" 
+                     VerticalAlignment="Center"
+                     HorizontalAlignment="Center"
+                     Margin="0,0,10,0"
+                     Foreground="{DynamicResource PrimaryForegroundColor}" />
+          <ComboBox ItemsSource="{Binding Themes}"
+                    SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
+                    HorizontalAlignment="Center"
+                    Width=""/>
+        </StackPanel>
+      </Grid>
+    </DockPanel>
+  </Grid>
+</Window>

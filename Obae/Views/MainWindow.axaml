@@ -1,0 +1,210 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Obae.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="Obae.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Height="700"
+        Width="700"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Obae"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome">
+  
+  <Design.DataContext>
+    <vm:MainWindowViewModel/>
+  </Design.DataContext>
+
+  <DockPanel>
+    <!-- Hide for Linux/MacOS & Render for Windows -->
+    <!-- Custom Title Bar with Acrylic Effect -->
+    <ExperimentalAcrylicBorder x:Name="StatusBar" DockPanel.Dock="Top" Height="40">
+      <ExperimentalAcrylicBorder.Material>
+        <ExperimentalAcrylicMaterial BackgroundSource="Digger"
+                                     TintColor="{DynamicResource AcrylicBackgroundColor}"
+                                     TintOpacity="1"
+                                     MaterialOpacity="0.65" />
+      </ExperimentalAcrylicBorder.Material>
+      <!-- Content inside the acrylic title bar -->
+      <Grid ZIndex="100">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <!-- Draggable Area -->
+        <Border Background="Transparent"
+                VerticalAlignment="Center"
+                PointerPressed="StatusBar_OnBarPressed">
+          <TextBlock Text="Beatmap Artwork Downloader" 
+                     VerticalAlignment="Center" 
+                     Margin="10,0"
+                     Foreground="{DynamicResource PrimaryForegroundColor}"/>
+        </Border>
+        <!-- Custom Window Buttons -->
+        <StackPanel Orientation="Horizontal"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Margin="0,0,10,0">
+          <Button Width="30" Height="25" Click="Minimise"
+                  Background="Transparent">
+            <Path Data="{StaticResource MinimiseIcon}"
+                  Fill="{DynamicResource PrimaryForegroundColor}"
+                  Stretch="Uniform"
+                  VerticalAlignment="Center"/>
+          </Button>
+          <Button Width="30" Height="25" Click="Maximise"
+                  Background="Transparent">
+            <Path Data="{StaticResource MaximiseIcon}"
+                  Fill="{DynamicResource PrimaryForegroundColor}"
+                  StrokeThickness="2"
+                  Stretch="Uniform"
+                  VerticalAlignment="Center"/>
+          </Button>
+          <Button Width="30" Height="25" Click="Close"
+                  Background="Transparent">
+            <Path Data="{StaticResource CloseIcon}"
+                  Stroke="{DynamicResource PrimaryForegroundColor}"
+                  StrokeThickness="1.06"
+                  Stretch="Uniform"
+                  VerticalAlignment="Center"/>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </ExperimentalAcrylicBorder>
+    
+    <!-- Second Bar for Additional Controls (e.g., Settings) -->
+    <ExperimentalAcrylicBorder DockPanel.Dock="Top" Height="32">
+      <ExperimentalAcrylicBorder.Material>
+        <ExperimentalAcrylicMaterial BackgroundSource="Digger"
+                                     TintColor="{DynamicResource AcrylicBackgroundColor}"
+                                     TintOpacity="1"
+                                     MaterialOpacity="0.65" />
+      </ExperimentalAcrylicBorder.Material>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <!-- Place left-side content here if needed -->
+        <StackPanel Orientation="Horizontal"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Margin="0,0,10,0">
+          <!-- Settings Icon Button -->
+          <Button VerticalContentAlignment="Center"
+                  HorizontalContentAlignment="Center"
+                  Padding="8,5"
+                  Height="30"
+                  Click="RenderSettingsPage"
+                  Background="Transparent"> 
+            <StackPanel Orientation="Horizontal"
+                        Spacing="5"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center">
+              <Path Data="{StaticResource SettingsIcon}"
+                    Width="16"
+                    Height="16"
+                    Fill="{DynamicResource PrimaryForegroundColor}" />
+              <TextBlock Text="Settings"
+                         VerticalAlignment="Center"
+                         HorizontalAlignment="Center"
+                         FontSize="13"
+                         Foreground="{DynamicResource PrimaryForegroundColor}"/>
+            </StackPanel>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </ExperimentalAcrylicBorder>
+
+    <!-- Main Content -->
+    <Grid>
+      <!-- Acrylic Background for Main Content covering both rows -->
+      <ExperimentalAcrylicBorder Grid.RowSpan="2"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 IsHitTestVisible="False">
+        <ExperimentalAcrylicBorder.Material>
+          <ExperimentalAcrylicMaterial BackgroundSource="Digger"
+                                       TintColor="{DynamicResource AcrylicBackgroundColor}"
+                                       TintOpacity="1"
+                                       MaterialOpacity="0.65" />
+        </ExperimentalAcrylicBorder.Material>
+      </ExperimentalAcrylicBorder>
+
+      <!-- Define two rows: one for text controls and one for images -->
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+
+      <!-- Top Section with TextBlock and TextBox -->
+      <StackPanel Grid.Row="0" Margin="10">
+        <TextBlock Text="Enter Beatmap ID"
+                   FontSize="24"
+                   Margin="0,0,0,20"
+                   HorizontalAlignment="Center"
+                   Foreground="{DynamicResource PrimaryForegroundColor}"/>
+        <TextBox Text="{Binding BeatmapId}"
+                 MinWidth="300"
+                 MaxHeight="30"
+                 HorizontalAlignment="Center"
+                 TextAlignment="Center"
+                 KeyDown="GetBeatmapForDownload"/>
+        <TextBlock Text="{Binding StatusMessage}"
+                   FontSize="16"
+                   Margin="0,5,0,20"
+                   HorizontalAlignment="Center"
+                   Foreground="{DynamicResource PrimaryForegroundColor}"
+                   IsVisible="{Binding IsBusy}">
+        </TextBlock>
+      </StackPanel>
+
+      <!-- Images Section -->
+      <ScrollViewer Grid.Row="1"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Disabled"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Background="Transparent">
+
+        <ItemsControl ItemsSource="{Binding BeatmapImagesBitmap}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
+    
+          <!-- Vertical StackPanel -->
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Vertical"
+                          HorizontalAlignment="Stretch"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+    
+          <!-- Each item is an Image that fills the width but preserves aspect ratio -->
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <!-- Border to give some margin / corner radius -->
+              <Border Margin="10"
+                      HorizontalAlignment="Stretch"
+                      CornerRadius="5"
+                      ClipToBounds="True">
+                <Image Source="{Binding}"
+                       Stretch="Uniform"
+                       HorizontalAlignment="Stretch">
+                  <Image.ContextMenu>
+                    <ContextMenu>
+                    <MenuItem Header="Save As" Click="SaveImageToDisk" CommandParameter="{Binding}" ></MenuItem>
+                    </ContextMenu>
+                  </Image.ContextMenu>
+                </Image>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Grid>
+  </DockPanel>
+</Window>
