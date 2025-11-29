@@ -1,4 +1,4 @@
-# Osu Beatmap Artwork Downloader
+# Osu Beatmap Artwork Exporter
 Download Osu beatmap artwork the easy way!
 
 Automates the process of downloading beatmaps and extracting the artwork. Only keeping the files that YOU wish to keep.
