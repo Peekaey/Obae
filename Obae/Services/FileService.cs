@@ -14,10 +14,6 @@ namespace Obae.Services;
 
 public class FileService : IFileService
 {
-    public async Task<FileSaveResult> SaveFileToDisk()
-    {
-        return FileSaveResult.AsFileSaveSuccess("");
-    }
     
     public ServiceResult CreateWorkingDirectory(string folderPath)
     {
@@ -26,22 +22,6 @@ public class FileService : IFileService
             if (!Directory.Exists(folderPath))
             {
                 Directory.CreateDirectory(folderPath);
-            }
-            return ServiceResult.AsSuccess();
-        }
-        catch (IOException e)
-        {
-            return ServiceResult.AsFailure(e.Message);
-        }
-    }
-    
-    public ServiceResult RemoveDirectory(string folderPath)
-    {
-        try
-        {
-            if (Directory.Exists(folderPath))
-            {
-                Directory.Delete(folderPath, true);
             }
             return ServiceResult.AsSuccess();
         }
@@ -156,52 +136,4 @@ public class FileService : IFileService
             return FileSaveResult.AsFileSaveFailure(e.Message);
         }
     }
-    
-    public async Task<FileSaveResult> SaveSettingsToJsonConfig(string defaultSaveDirectory, string configSavePath, string cookie, string theme)
-    {
-        try
-        {
-            var parentDirectory = Path.GetDirectoryName(configSavePath);
-            var workingDirectoryResult = CreateWorkingDirectory(parentDirectory);
-            
-            if (!File.Exists(configSavePath))
-            {
-                using (File.Create(configSavePath)) { }
-            }
-
-            // In the case user purely wishes to save theme selection and not cookie
-            if (cookie == null)
-            {
-                cookie = "";
-            }
-            var cookieJson = JsonSerializer.Serialize(new { Cookie = cookie, Theme = theme });
-            await File.WriteAllTextAsync(configSavePath, cookieJson);
-            return FileSaveResult.AsFileSaveSuccess(configSavePath);
-            
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"Error saving cookie: {e.Message}");
-            return FileSaveResult.AsFileSaveFailure(e.Message);
-        }
-    }
-
-    public async Task<FileSaveResult> RemoveSettingsJsonConfig(string configSavePath)
-    {
-        try
-        {
-            if (File.Exists(configSavePath))
-            {
-                File.Delete(configSavePath);
-            }
-            // Assume file is already deleted if it doesn't exist
-            return FileSaveResult.AsFileSaveSuccess("");
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"Error removing cookie: {e.Message}");
-            return FileSaveResult.AsFileSaveFailure(e.Message);
-        }
-    }
-
 }

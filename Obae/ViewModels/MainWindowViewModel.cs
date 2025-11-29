@@ -21,12 +21,12 @@ public partial class MainWindowViewModel : ViewModelBase , INotifyPropertyChange
 {
     private readonly IBeatmapService _beatmapService;
     private readonly IImageHelpers _imageHelpers;
-    private readonly AppSettings _appSettings;
+    private readonly CachedAppSettings _cachedAppSettings;
     private readonly IFileService _fileService;
-    public MainWindowViewModel(IBeatmapService beatmapService, AppSettings appSettings, IImageHelpers imageHelpers, IFileService fileService)
+    public MainWindowViewModel(IBeatmapService beatmapService, CachedAppSettings cachedAppSettings, IImageHelpers imageHelpers, IFileService fileService)
     {
         _beatmapService = beatmapService;
-        _appSettings = appSettings;
+        _cachedAppSettings = cachedAppSettings;
         _imageHelpers = imageHelpers;
         _fileService = fileService;
         IsBusy = false;
@@ -76,7 +76,7 @@ public partial class MainWindowViewModel : ViewModelBase , INotifyPropertyChange
     {
         StatusMessage = "Downloading Beatmap...";
         IsBusy = true;
-        var beatmapImagesResult = await _beatmapService.DownloadBeatmap(BeatmapId, _appSettings.DefaultFolderPath, _appSettings.OsuCookieValue);
+        var beatmapImagesResult = await _beatmapService.DownloadBeatmap(BeatmapId, _cachedAppSettings.DefaultFolderPath, _cachedAppSettings.OsuCookieValue);
 
         if (beatmapImagesResult.Success == false)
         {

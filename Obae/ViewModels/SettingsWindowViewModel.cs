@@ -1,36 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia;
 using Obae.Interfaces;
 using Obae.Models;
+using Obae.Models.Enums;
 
 namespace Obae.ViewModels;
 
 public class SettingsWindowViewModel : ViewModelBase , INotifyPropertyChanged
 {
-        private readonly AppSettings _appSettings;
+        private readonly CachedAppSettings _cachedAppSettings;
         private readonly IFileService _fileService;
+        private readonly IDataService _dataService;
     
-    public SettingsWindowViewModel(AppSettings appSettings, IFileService fileService)
+    public SettingsWindowViewModel(CachedAppSettings cachedAppSettings, IFileService fileService , IDataService dataService)
     {
-        _appSettings = appSettings;
+        _cachedAppSettings = cachedAppSettings;
         _fileService = fileService;
+        _dataService = dataService;
+        
         // Populate available themes
         Themes = Enum.GetValues(typeof(Themes)).Cast<Themes>().ToList();
+        MirrorSources = Enum.GetValues(typeof(MirrorSources)).Cast<MirrorSources>().ToList();
+        _selectedMirrorSources = new ObservableCollection<MirrorSources>(_cachedAppSettings.SelectedMirrorSources ?? new List<MirrorSources>());
+        _selectedMirrorSources.CollectionChanged += OnSelectedMirrorSourcesChanged;
+
     }
     
     // Gets properties on Initialisation from AppSettings
     // Working Directory
     public string DefaultFolderPath
     {
-        get => _appSettings.DefaultFolderPath;
+        get => _cachedAppSettings.DefaultFolderPath;
         set
         {
-            if (_appSettings.DefaultFolderPath != value)
+            if (_cachedAppSettings.DefaultFolderPath != value)
             {
-                _appSettings.DefaultFolderPath = value;
+                _cachedAppSettings.DefaultFolderPath = value;
                 OnPropertyChanged(nameof(DefaultFolderPath));
             }
         }
@@ -39,70 +48,49 @@ public class SettingsWindowViewModel : ViewModelBase , INotifyPropertyChanged
     // Value of the Users Cookie Session Value
     public string OsuSessionCookieValue
     {
-        get => _appSettings.OsuCookieValue;
+        get => _cachedAppSettings.OsuCookieValue;
         set
         {
-            if (_appSettings.OsuCookieValue != value)
+            if (_cachedAppSettings.OsuCookieValue != value)
             {
-                _appSettings.OsuCookieValue = value;
-
-                if (_appSettings.SaveSettingsToConfigFile == true)
-                { 
-                    _fileService.SaveSettingsToJsonConfig(_appSettings.DefaultFolderPath,
-                        _appSettings.ConfigFilePath, _appSettings.OsuCookieValue, _appSettings.SelectedThemes.ToString());
-                }
-                
+                _cachedAppSettings.OsuCookieValue = value;
                 OnPropertyChanged(nameof(OsuSessionCookieValue));
             }
         }
     }
     
-    public bool SaveSettingsToConfigFile
+    public bool SaveSettingsToDatabase
     {
-        get => _appSettings.SaveSettingsToConfigFile;
+        get => _cachedAppSettings.SaveSettingsToDatabase;
         set
-        {
-            if (_appSettings.SaveSettingsToConfigFile != value)
-            {
-                _appSettings.SaveSettingsToConfigFile = value;
-
-                if (_appSettings.SaveSettingsToConfigFile == true)
-                {
-                        _fileService.SaveSettingsToJsonConfig(_appSettings.DefaultFolderPath,
-                            _appSettings.ConfigFilePath, _appSettings.OsuCookieValue, _appSettings.SelectedThemes.ToString());
-                }
-                else
-                {
-                    _fileService.RemoveSettingsJsonConfig(_appSettings.ConfigFilePath);
-                    _appSettings.OsuCookieValue = string.Empty;
-                }
-                OnPropertyChanged(nameof(SaveSettingsToConfigFile));
-            }
+        { 
+            OnPropertyChanged(nameof(SaveSettingsToDatabase));
         }
+    }
+    
+    public List<MirrorSources> MirrorSources { get; }
+    
+    // Use ObservableCollection over List due to incompatibility issues with ListBox
+    private readonly ObservableCollection<MirrorSources> _selectedMirrorSources;
+    public ObservableCollection<MirrorSources> SelectedMirrorSources
+    {
+        get => _selectedMirrorSources;
     }
     
     public List<Themes> Themes { get; }
 
     public Themes SelectedTheme
     {
-        get => _appSettings.SelectedThemes;
+        get => _cachedAppSettings.SelectedTheme;
         set
         {
-            if (_appSettings.SelectedThemes != value)
+            if (_cachedAppSettings.SelectedTheme != value)
             {
-                _appSettings.SelectedThemes = value;
+                _cachedAppSettings.SelectedTheme = value;
                 // Dynamically apply the new theme
                 var app = (App)Application.Current;
                 app.SetTheme(value);
-                
-                if (_appSettings.SaveSettingsToConfigFile == true)
-                {
-                    _fileService.SaveSettingsToJsonConfig(_appSettings.DefaultFolderPath,
-                        _appSettings.ConfigFilePath, _appSettings.OsuCookieValue, _appSettings.SelectedThemes.ToString());
-                }
-                
                 OnPropertyChanged(nameof(SelectedTheme));
-
             }
         }
     }
@@ -112,5 +100,24 @@ public class SettingsWindowViewModel : ViewModelBase , INotifyPropertyChanged
     {
         Console.WriteLine($"Property changed: {propertyName} to {GetType().GetProperty(propertyName)?.GetValue(this)}");
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        HandleSaveToDatabase();
+    }
+    
+    // Subscribe to the SelectedMirrorSources over a setter due Avalonia modifying the existing collection instead of creating a new collection
+    // Therefore the setter is never triggered
+    private void OnSelectedMirrorSourcesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        _cachedAppSettings.SelectedMirrorSources = _selectedMirrorSources.ToList();
+        HandleSaveToDatabase();
+    }
+
+    // If SaveSettingsToDatabase is checked, store the preferences in the sqlite database
+    // Otherwise we just keep it in memory |> Results in app launching with defaults next time
+    private void HandleSaveToDatabase()
+    {
+        if (_cachedAppSettings.SaveSettingsToDatabase)
+        {
+            _dataService.SaveSettingsToDatabase(_cachedAppSettings);
+        }
     }
 }

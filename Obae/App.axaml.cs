@@ -11,11 +11,14 @@ using System.Net.Http;
 using System.Text.Json;
 using Avalonia.Markup.Xaml;
 using Avalonia.Markup.Xaml.Styling;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Obae.Helpers;
 using Obae.Interfaces;
 using Obae.Models;
+using Obae.Models.Database;
+using Obae.Models.Enums;
 using Obae.Services;
 using Obae.ViewModels;
 using Obae.Views;
@@ -64,36 +67,20 @@ public partial class App : Application
         services.AddSingleton<IValidationHelper, ValidationHelper>();
         services.AddSingleton<IPlaywrightService, PlaywrightService>();
         services.AddSingleton<IImageHelpers, ImageHelpers>();
+        services.AddSingleton<IDataService, DataService>();
+        services.AddDbContext<DataContext>(options => options.UseSqlite("Data Source=obae-app.db"));
 
-        services.AddSingleton<AppSettings>(provider =>
-        {
-            var settings = new AppSettings();
-            if (File.Exists(settings.ConfigFilePath))
-            {
-                try
-                {
-                    
-                    var configContexts = File.ReadAllText(settings.ConfigFilePath);
-                    var configDictionary = JsonSerializer.Deserialize<Dictionary<string, string>>(configContexts);
-                    settings.OsuCookieValue = configDictionary?["Cookie"];
-                    settings.SelectedThemes = (Themes)Enum.Parse(typeof(Themes), configDictionary?["Theme"] ?? "0");
-                    settings.SaveSettingsToConfigFile = true;                    settings.SaveSettingsToConfigFile = true;
-                }
-                catch (Exception e)
-                {
-                    // If can't read value from file, assume file is corrupt or invalid
-                    // Do nothing and run with default settings
-                    Console.WriteLine("Error reading config file: " + e.Message);
-                }
-            }
-            return settings;
-        });
+        services.AddSingleton<CachedAppSettings>();
         
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<SettingsWindowViewModel>();
         
-        
+
         _serviceProvider = services.BuildServiceProvider();
+        
+        
+        InitialiseDatabase();
+        InitialiseAppSettings();
         ServiceProvider = _serviceProvider;
         
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -107,8 +94,59 @@ public partial class App : Application
             };
         }
         
-        SetTheme(_serviceProvider.GetRequiredService<AppSettings>().SelectedThemes);
+        SetTheme(_serviceProvider.GetRequiredService<CachedAppSettings>().SelectedTheme);
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void InitialiseAppSettings()
+    {
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+            var cachedSettings = scope.ServiceProvider.GetRequiredService<CachedAppSettings>();
+            var dbSettings = dbContext.AppSettings.FirstOrDefault();
+
+            if (dbSettings != null)
+            {
+                cachedSettings.DefaultFolderPath = dbSettings.DefaultFolderPath;
+                cachedSettings.OsuCookieValue = dbSettings.OsuCookieValue ?? string.Empty;
+                cachedSettings.SaveSettingsToDatabase = dbSettings.SaveSettingsToDatabase;
+                cachedSettings.SelectedTheme = dbSettings.SelectedTheme;
+                cachedSettings.SelectedMirrorSources = dbSettings.SelectedMirrorSources;
+            }
+        }
+    }
+    private void InitialiseDatabase()
+    {
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+            dbContext.Database.EnsureCreated();
+
+            if (!dbContext.AppSettings.Any())
+            {
+                var defaultMirrorSources = new List<MirrorSources>
+                {
+                    MirrorSources.Nerinyan,
+                    MirrorSources.BeatConnect,
+                };
+
+                var defaultSettings = new AppSettings
+                {
+                    SelectedTheme = Themes.Light,
+                    OsuCookieValue = null,
+                    DefaultFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Obae"),
+                    SaveSettingsToDatabase = false,
+                    SelectedMirrorSourcesJson = JsonSerializer.Serialize(defaultMirrorSources),
+                    LastUpdatedUtc = DateTime.UtcNow
+                };
+                
+                dbContext.AppSettings.Add(defaultSettings);
+                dbContext.SaveChanges();
+            
+                Console.WriteLine("Default app settings created in database");
+            }
+        }
     }
     
     public void SetTheme(Themes themes)

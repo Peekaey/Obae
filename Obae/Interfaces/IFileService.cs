@@ -12,6 +12,5 @@ public interface IFileService
     ServiceResult CreateWorkingDirectory(string folderPath);
     List<MemoryStream>? GetImagesFromBeatmap(string beatmapFilePath);
     Task<FileSaveResult> SaveImageToDisk(IStorageFile storageFile, Bitmap imageBitmap);
-    Task<FileSaveResult> SaveSettingsToJsonConfig(string defaultSaveDirectory, string configSavePath, string cookie, string theme);
-    Task<FileSaveResult> RemoveSettingsJsonConfig(string configSavePath);
+
 }

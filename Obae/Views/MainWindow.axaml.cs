@@ -61,9 +61,10 @@ public partial class MainWindow : Window
     
     private void RenderSettingsPage(object? sender, Avalonia.Interactivity.RoutedEventArgs eventArgs)
     {
-        var appSettings = App.ServiceProvider.GetRequiredService<AppSettings>();
+        var appSettings = App.ServiceProvider.GetRequiredService<CachedAppSettings>();
         var fileService = App.ServiceProvider.GetRequiredService<IFileService>();
-        var settingsViewModel = new SettingsWindowViewModel(appSettings, fileService);
+        var dataService = App.ServiceProvider.GetRequiredService<IDataService>();
+        var settingsViewModel = new SettingsWindowViewModel(appSettings, fileService, dataService);
         var settingsWindow = new SettingsWindow
         {
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
