@@ -64,6 +64,7 @@ public class SettingsWindowViewModel : ViewModelBase , INotifyPropertyChanged
         get => _cachedAppSettings.SaveSettingsToDatabase;
         set
         { 
+            _cachedAppSettings.SaveSettingsToDatabase = value;
             OnPropertyChanged(nameof(SaveSettingsToDatabase));
         }
     }
@@ -100,7 +101,7 @@ public class SettingsWindowViewModel : ViewModelBase , INotifyPropertyChanged
     {
         Console.WriteLine($"Property changed: {propertyName} to {GetType().GetProperty(propertyName)?.GetValue(this)}");
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        HandleSaveToDatabase();
+        HandleSaveToDatabase(propertyName);
     }
     
     // Subscribe to the SelectedMirrorSources over a setter due Avalonia modifying the existing collection instead of creating a new collection
@@ -108,14 +109,14 @@ public class SettingsWindowViewModel : ViewModelBase , INotifyPropertyChanged
     private void OnSelectedMirrorSourcesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         _cachedAppSettings.SelectedMirrorSources = _selectedMirrorSources.ToList();
-        HandleSaveToDatabase();
+        OnPropertyChanged(nameof(SelectedMirrorSources));
     }
 
     // If SaveSettingsToDatabase is checked, store the preferences in the sqlite database
     // Otherwise we just keep it in memory |> Results in app launching with defaults next time
-    private void HandleSaveToDatabase()
+    private void HandleSaveToDatabase(string propertyName)
     {
-        if (_cachedAppSettings.SaveSettingsToDatabase)
+        if (_cachedAppSettings.SaveSettingsToDatabase || propertyName == nameof(SaveSettingsToDatabase))
         {
             _dataService.SaveSettingsToDatabase(_cachedAppSettings);
         }

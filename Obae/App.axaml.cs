@@ -123,8 +123,18 @@ public partial class App : Application
             var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
             dbContext.Database.EnsureCreated();
 
-            if (!dbContext.AppSettings.Any())
+            var existingSettings = dbContext.AppSettings.FirstOrDefault();
+            // If existing settings doesn't exist or existing settings does exist but save settings is false
+            // |> Recreate the default app settings for launch
+            if (existingSettings == null || existingSettings.SaveSettingsToDatabase == false)
             {
+                // If settings existing and save settings was disabled |> was disabled from last launch
+                // Therefore we want to wipe all pre existing configurations and start on a clean slate
+                if (existingSettings != null && existingSettings.SaveSettingsToDatabase == false)
+                {
+                    dbContext.Remove(existingSettings);
+                }
+                
                 var defaultMirrorSources = new List<MirrorSources>
                 {
                     MirrorSources.Nerinyan,
@@ -146,6 +156,7 @@ public partial class App : Application
             
                 Console.WriteLine("Default app settings created in database");
             }
+            
         }
     }
     

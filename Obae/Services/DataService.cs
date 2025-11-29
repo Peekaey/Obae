@@ -34,7 +34,7 @@ public class DataService : IDataService
                 existingSettings.SelectedTheme = cachedAppSettings.SelectedTheme;
                 existingSettings.OsuCookieValue = cachedAppSettings.OsuCookieValue;
                 existingSettings.DefaultFolderPath = cachedAppSettings.DefaultFolderPath;
-                existingSettings.SaveSettingsToDatabase = true;
+                existingSettings.SaveSettingsToDatabase = cachedAppSettings.SaveSettingsToDatabase;
                 existingSettings.LastUpdatedUtc = DateTime.UtcNow;
                 existingSettings.SelectedMirrorSourcesJson = JsonSerializer.Serialize(cachedAppSettings.SelectedMirrorSources);
                 await _dataContext.SaveChangesAsync();
