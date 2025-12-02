@@ -6,10 +6,13 @@
         <Color x:Key="PrimaryForegroundColor">#000000</Color>
         <Color x:Key="CheckBoxBorderBrushColor">#333333</Color>
         <Color x:Key="AcrylicBackgroundColor"> #FFFFFF</Color>
+        <Color x:Key="ContrastButtonBackgroundColor">#333333</Color>
         <SolidColorBrush x:Key="PrimaryBackgroundBrush" Color="{DynamicResource PrimaryBackgroundColor}" />
         <SolidColorBrush x:Key="SecondaryBackgroundBrush" Color="{DynamicResource SecondaryBackgroundColor}" />
         <SolidColorBrush x:Key="PrimaryForegroundBrush" Color="{DynamicResource PrimaryForegroundColor}" />
         <SolidColorBrush x:Key="CheckBoxBorderBrush" Color="{DynamicResource CheckBoxBorderBrushColor}"></SolidColorBrush>
         <SolidColorBrush x:Key="AcrylicBackground" Color="{DynamicResource AcrylicBackgroundColor}"></SolidColorBrush>
+        <SolidColorBrush x:Key="ContactButtonBackgroundColor" Color="{DynamicResource ContrastButtonBackgroundColor}"></SolidColorBrush>
+
     </Styles.Resources>
 </Styles>

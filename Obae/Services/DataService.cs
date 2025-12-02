@@ -32,6 +32,7 @@ public class DataService : IDataService
                 var existingSettings = await _dataContext.AppSettings.FirstOrDefaultAsync();
 
                 existingSettings.SelectedTheme = cachedAppSettings.SelectedTheme;
+                // TODO Scramble CookieValue before storing and unscramble upon read
                 existingSettings.OsuCookieValue = cachedAppSettings.OsuCookieValue;
                 existingSettings.DefaultFolderPath = cachedAppSettings.DefaultFolderPath;
                 existingSettings.SaveSettingsToDatabase = cachedAppSettings.SaveSettingsToDatabase;

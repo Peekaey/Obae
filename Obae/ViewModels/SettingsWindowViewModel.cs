@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia;
@@ -106,7 +107,7 @@ public class SettingsWindowViewModel : ViewModelBase , INotifyPropertyChanged
     
     // Subscribe to the SelectedMirrorSources over a setter due Avalonia modifying the existing collection instead of creating a new collection
     // Therefore the setter is never triggered
-    private void OnSelectedMirrorSourcesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    private void OnSelectedMirrorSourcesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         _cachedAppSettings.SelectedMirrorSources = _selectedMirrorSources.ToList();
         OnPropertyChanged(nameof(SelectedMirrorSources));

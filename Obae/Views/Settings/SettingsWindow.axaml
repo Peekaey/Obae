@@ -92,11 +92,28 @@
                      HorizontalAlignment="Center"
                      Foreground="{DynamicResource PrimaryForegroundBrush}"
                      Margin="0,0,10,0" />
-          <TextBox Text="{Binding DefaultFolderPath, Mode=TwoWay}"
-                   VerticalAlignment="Center"
-                   HorizontalAlignment="Stretch"
-                   IsReadOnly="True"
-                   TextAlignment="Center"/>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+    
+            <TextBox Grid.Column="0"
+                     Text="{Binding DefaultFolderPath, Mode=TwoWay}"
+                     VerticalAlignment="Center"
+                     IsReadOnly="True"
+                     TextAlignment="Center"
+                     Margin="0,0,5,0"/>
+    
+            <Button Grid.Column="1"
+                    Content="Browse..."
+                    Click="BrowseFolderButton_OnClickAsync"
+                    VerticalAlignment="Center"
+                    Padding="10,5"
+                    Foreground="{DynamicResource PrimaryBackgroundColor}"
+                    Background="{DynamicResource ContrastButtonBackgroundColor}"/>
+                    
+          </Grid>
         </StackPanel>
         
         <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,5">
@@ -104,44 +121,52 @@
                      VerticalAlignment="Center"
                      HorizontalAlignment="Center"
                      Foreground="{DynamicResource PrimaryForegroundBrush}"
-                     Margin="0,0,10,0" />
-          <TextBox Text="{Binding OsuSessionCookieValue, Mode=TwoWay}"
+                     Margin="0,0,5,0" />
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+          <TextBox Grid.Column="0" Text="{Binding OsuSessionCookieValue, Mode=TwoWay}"
                    VerticalAlignment="Center"
                    HorizontalAlignment="Stretch"
-                   TextAlignment="Center"/>
+                   TextAlignment="Center"
+                   Margin="0,0,5,0"/>
+          
+          <Button Grid.Column="1"
+            Content="Clear"
+            Click="ClearOsuCookieSessionValue_OnClick"
+            VerticalAlignment="Center"
+            Padding="10,5"
+            Foreground="{DynamicResource PrimaryBackgroundColor}"
+            Background="{DynamicResource ContrastButtonBackgroundColor}"/>
+          </Grid>
         </StackPanel>
         
         <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0, 5">
           <TextBlock Text="Mirror Sources Used"
                      VerticalAlignment="Center"
-                     HorizontalAlignment="Center"
                      Foreground="{DynamicResource PrimaryForegroundBrush}"
-                     Margin="0,0,10,0"/>
-          <ListBox
+                     HorizontalAlignment="Center" Margin="0,0,10,0"/>
+          
+            <ListBox
             SelectionMode="Multiple"
             ItemsSource="{Binding MirrorSources}"
             SelectedItems="{Binding SelectedMirrorSources, Mode=TwoWay}"
             HorizontalAlignment="Center"
             CornerRadius="5"
             BorderBrush="{DynamicResource CheckBoxBorderBrush}"
-            Width=""/>
+            Width="">
+              <ListBox.Styles>
+                <Style Selector="ListBoxItem">
+                  <Setter Property="HorizontalContentAlignment" Value="Center"/> 
+                </Style>
+              </ListBox.Styles>
+            </ListBox>
         </StackPanel>
         
-        <StackPanel Grid.Row="3" Orientation="Vertical" Margin="0,5">
-          <TextBlock Text="Save Preferences for every startup"
-                     VerticalAlignment="Center"
-                     HorizontalAlignment="Center"
-                     Margin="0,0,10,0" 
-                     Foreground="{DynamicResource PrimaryForegroundColor}"/>
-          <CheckBox IsChecked="{Binding SaveSettingsToDatabase , Mode=TwoWay}"
-                    BorderBrush="{DynamicResource CheckBoxBorderBrush}"
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Center"/>
-        </StackPanel>
-        
-        
-        
-        <StackPanel Grid.Row="4" Orientation="Vertical" Margin="0,10" VerticalAlignment="Center">
+        <StackPanel Grid.Row="3" Orientation="Vertical" Margin="0,10" VerticalAlignment="Center">
           <TextBlock Text="Theme" 
                      VerticalAlignment="Center"
                      HorizontalAlignment="Center"
@@ -151,6 +176,18 @@
                     SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
                     HorizontalAlignment="Center"
                     Width=""/>
+        </StackPanel>
+        
+        <StackPanel Grid.Row="4" Orientation="Vertical" Margin="0,5">
+          <TextBlock Text="Save Preferences for every startup"
+                     VerticalAlignment="Center"
+                     HorizontalAlignment="Center"
+                     Margin="0,0,10,0" 
+                     Foreground="{DynamicResource PrimaryForegroundColor}"/>
+          <CheckBox IsChecked="{Binding SaveSettingsToDatabase , Mode=TwoWay}"
+                    BorderBrush="{DynamicResource CheckBoxBorderBrush}"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"/>
         </StackPanel>
       </Grid>
     </DockPanel>
