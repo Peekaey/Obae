@@ -143,7 +143,7 @@
 
       <!-- Top Section with TextBlock and TextBox -->
       <StackPanel Grid.Row="0" Margin="10">
-        <TextBlock Text="Enter Beatmap ID"
+        <TextBlock Text="Enter Beatmap ID or Beatmap link"
                    FontSize="24"
                    Margin="0,0,0,20"
                    HorizontalAlignment="Center"
@@ -153,6 +153,7 @@
                  MaxHeight="30"
                  HorizontalAlignment="Center"
                  TextAlignment="Center"
+                 Watermark="Beatmap ID or Beatmap link"
                  KeyDown="GetBeatmapForDownload"/>
         <TextBlock Text="{Binding StatusMessage}"
                    FontSize="16"

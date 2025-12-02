@@ -132,6 +132,8 @@
                    VerticalAlignment="Center"
                    HorizontalAlignment="Stretch"
                    TextAlignment="Center"
+                   PasswordChar="*"
+                   Watermark="osu_session cookie from osu site when logged in "
                    Margin="0,0,5,0"/>
           
           <Button Grid.Column="1"
