@@ -12,6 +12,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Input;
+using Obae.Helpers;
 using Obae.Interfaces;
 using Obae.Models;
 
@@ -72,29 +73,40 @@ public partial class MainWindowViewModel : ViewModelBase , INotifyPropertyChange
         }
     }
         
-    public async Task DownloadBeatmap(string beatmapId)
+    public async Task DownloadBeatmap(string userInput)
     {
         StatusMessage = "Downloading Beatmap...";
         IsBusy = true;
-        var beatmapImagesResult = await _beatmapService.DownloadBeatmap(BeatmapId, _cachedAppSettings.DefaultFolderPath, _cachedAppSettings.OsuCookieValue);
-
-        if (beatmapImagesResult.Success == false)
-        {
-            StatusMessage = $"Error downloading beatmap: {beatmapImagesResult.StatusMessage}";
-        }
-
-        if (beatmapImagesResult.Success == true && !beatmapImagesResult.Artworks.Any())
-        {
-            StatusMessage = $"No Artwork found for Beatmap: {beatmapImagesResult.StatusMessage}";
-        }
         
-        if (beatmapImagesResult.Success == true && beatmapImagesResult.Artworks.Any())
+        var beatmapId = userInput.ValidateBeatmapInput();
+
+        if (beatmapId == null)
         {
-            BeatmapImages = new ObservableCollection<MemoryStream>(beatmapImagesResult.Artworks);
-            // Convert MemoryStream images to Bitmaps so Avalonia UI can Render them
-            var convertedBitmaps = _imageHelpers.ConvertMemoryStreamToBitmap(beatmapImagesResult.Artworks);
-            BeatmapImagesBitmap = new ObservableCollection<Bitmap>(convertedBitmaps);
-            StatusMessage = $"Showing Artwork for : {beatmapImagesResult.StatusMessage}";
+            StatusMessage = "Invalid Beatmap ID or Beatmap link provided!";
+        }
+        else
+        {
+            var beatmapImagesResult = await _beatmapService.DownloadBeatmap(beatmapId,
+                _cachedAppSettings.DefaultFolderPath, _cachedAppSettings.OsuCookieValue);
+
+            if (beatmapImagesResult.Success == false)
+            {
+                StatusMessage = $"Error downloading beatmap: {beatmapImagesResult.StatusMessage}";
+            }
+
+            if (beatmapImagesResult.Success == true && !beatmapImagesResult.Artworks.Any())
+            {
+                StatusMessage = $"No Artwork found for Beatmap: {beatmapImagesResult.StatusMessage}";
+            }
+
+            if (beatmapImagesResult.Success == true && beatmapImagesResult.Artworks.Any())
+            {
+                BeatmapImages = new ObservableCollection<MemoryStream>(beatmapImagesResult.Artworks);
+                // Convert MemoryStream images to Bitmaps so Avalonia UI can Render them
+                var convertedBitmaps = _imageHelpers.ConvertMemoryStreamToBitmap(beatmapImagesResult.Artworks);
+                BeatmapImagesBitmap = new ObservableCollection<Bitmap>(convertedBitmaps);
+                StatusMessage = $"Showing Artwork for : {beatmapImagesResult.StatusMessage}";
+            }
         }
     }
     

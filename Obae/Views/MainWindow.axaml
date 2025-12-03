@@ -198,6 +198,7 @@
                   <Image.ContextMenu>
                     <ContextMenu>
                     <MenuItem Header="Save As" Click="SaveImageToDisk" CommandParameter="{Binding}" ></MenuItem>
+                      <MenuItem Header="Copy" Click="CopyImageToClipboard" CommandParameter="{Binding}"></MenuItem>
                     </ContextMenu>
                   </Image.ContextMenu>
                 </Image>

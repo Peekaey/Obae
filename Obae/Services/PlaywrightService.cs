@@ -22,7 +22,7 @@ public class PlaywrightService : IPlaywrightService
         {
             browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
-                Headless = false
+                Headless = true
             });
         }
         catch (Exception e)

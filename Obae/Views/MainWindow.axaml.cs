@@ -11,6 +11,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Obae.Helpers;
 using Obae.Interfaces;
 using Obae.Models;
 using Obae.ViewModels;
@@ -121,4 +122,49 @@ public partial class MainWindow : Window
             Console.WriteLine($"Error saving image: {ex.Message}");
         }
     }
+
+    public async void CopyImageToClipboard(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (sender is MenuItem menuItem &&
+                menuItem.Parent is ContextMenu contextMenu &&
+                contextMenu.Parent is Popup popup &&
+                popup.Parent is Image image)
+            {
+                if (image.Source is Bitmap bitmap)
+                {
+                    var topLevel = Application.Current.GetTopLevel();
+                    var clipboard = topLevel?.Clipboard;
+                    if (clipboard != null)
+                    {
+                        using var memoryStream = new MemoryStream();
+                        memoryStream.Position = 0;
+                        var bytes = memoryStream.ToArray();
+
+                        var dataObject = new DataObject();
+                        
+                        if (OperatingSystem.IsMacOS())
+                        {
+                            dataObject.Set("public.png", bytes);
+                        }
+                        else if (OperatingSystem.IsWindows())
+                        {
+                            dataObject.Set("PNG", bytes);
+                        }
+                        else
+                        {
+                            dataObject.Set("image/png", bytes);
+                        }
+                        await clipboard.SetDataObjectAsync(dataObject);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving image: {ex.Message}");
+        }
+    }
+    
 }
