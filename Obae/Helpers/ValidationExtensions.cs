@@ -11,25 +11,17 @@ public static class ValidationExtensions
         {
             return null;
         }
-        
-        // Means that the user returned beatmapID directly and parses as an integer fine
-        // We do not need to do anything further.
-        if (beatmapInput.Length == 6 && int.TryParse(beatmapInput, out _))
-        {
-            return beatmapInput;
-        }
+
+        var beatmapId = string.Empty;
     
         // Gets beatmapset Id from full url - ie https://osu.ppy.sh/beatmapsets/371128#osu/814293
         if (beatmapInput.Contains("https://osu.ppy.sh/beatmapsets/"))
         {
             try
             {
-                var delimitedInput = beatmapInput.Split("https://osu.ppy.sh/beatmapsets/");
-                var takeFirstSix = delimitedInput[1].Substring(0, 6);
-                if (takeFirstSix.Length == 6 && int.TryParse(takeFirstSix, out _))
-                {
-                    return takeFirstSix;
-                }
+                var splitBaseUrl = beatmapInput.Split("https://osu.ppy.sh/beatmapsets/");
+                var splitMiddle = splitBaseUrl[1].Split("#");
+                beatmapId = splitMiddle[0];
             }
             catch (Exception ex)
             {
@@ -37,6 +29,11 @@ public static class ValidationExtensions
             }
         }
 
-        return null;
+        if (!int.TryParse(beatmapId, out var _))
+        {
+            return null;
+        }
+
+        return beatmapId;
     }
 }

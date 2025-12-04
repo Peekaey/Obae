@@ -139,11 +139,13 @@ public partial class MainWindow : Window
                     if (clipboard != null)
                     {
                         using var memoryStream = new MemoryStream();
+                        bitmap.Save(memoryStream);
                         memoryStream.Position = 0;
                         var bytes = memoryStream.ToArray();
 
                         var dataObject = new DataObject();
-                        
+
+                        // Add multiple formats for cross-platform compatibility
                         if (OperatingSystem.IsMacOS())
                         {
                             dataObject.Set("public.png", bytes);
@@ -156,6 +158,7 @@ public partial class MainWindow : Window
                         {
                             dataObject.Set("image/png", bytes);
                         }
+
                         await clipboard.SetDataObjectAsync(dataObject);
                     }
                 }
