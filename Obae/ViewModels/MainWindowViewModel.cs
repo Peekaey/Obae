@@ -24,6 +24,7 @@ public partial class MainWindowViewModel : ViewModelBase , INotifyPropertyChange
     private readonly IImageHelpers _imageHelpers;
     private readonly CachedAppSettings _cachedAppSettings;
     private readonly IFileService _fileService;
+    
     public MainWindowViewModel(IBeatmapService beatmapService, CachedAppSettings cachedAppSettings, IImageHelpers imageHelpers, IFileService fileService)
     {
         _beatmapService = beatmapService;
@@ -84,30 +85,29 @@ public partial class MainWindowViewModel : ViewModelBase , INotifyPropertyChange
         {
             StatusMessage = "Invalid Beatmap ID or Beatmap link provided!";
         }
-        else
+
+            
+        var beatmapImagesResult = await _beatmapService.DownloadBeatmap(beatmapId, _cachedAppSettings.DefaultFolderPath, _cachedAppSettings.OsuCookieValue);
+
+        if (beatmapImagesResult.Success == false)
         {
-            var beatmapImagesResult = await _beatmapService.DownloadBeatmap(beatmapId,
-                _cachedAppSettings.DefaultFolderPath, _cachedAppSettings.OsuCookieValue);
-
-            if (beatmapImagesResult.Success == false)
-            {
-                StatusMessage = $"Error downloading beatmap: {beatmapImagesResult.StatusMessage}";
-            }
-
-            if (beatmapImagesResult.Success == true && !beatmapImagesResult.Artworks.Any())
-            {
-                StatusMessage = $"No Artwork found for Beatmap: {beatmapImagesResult.StatusMessage}";
-            }
-
-            if (beatmapImagesResult.Success == true && beatmapImagesResult.Artworks.Any())
-            {
-                BeatmapImages = new ObservableCollection<MemoryStream>(beatmapImagesResult.Artworks);
-                // Convert MemoryStream images to Bitmaps so Avalonia UI can Render them
-                var convertedBitmaps = _imageHelpers.ConvertMemoryStreamToBitmap(beatmapImagesResult.Artworks);
-                BeatmapImagesBitmap = new ObservableCollection<Bitmap>(convertedBitmaps);
-                StatusMessage = $"Showing Artwork for : {beatmapImagesResult.StatusMessage}";
-            }
+            StatusMessage = $"Error downloading beatmap: {beatmapImagesResult.StatusMessage}";
         }
+
+        if (beatmapImagesResult.Success == true && !beatmapImagesResult.Artworks.Any())
+        {
+            StatusMessage = $"No Artwork found for Beatmap: {beatmapImagesResult.StatusMessage}";
+        }
+
+        if (beatmapImagesResult.Success == true && beatmapImagesResult.Artworks.Any())
+        {
+            BeatmapImages = new ObservableCollection<MemoryStream>(beatmapImagesResult.Artworks);
+            // Convert MemoryStream images to Bitmaps so Avalonia UI can Render them
+            var convertedBitmaps = _imageHelpers.ConvertMemoryStreamToBitmap(beatmapImagesResult.Artworks);
+            BeatmapImagesBitmap = new ObservableCollection<Bitmap>(convertedBitmaps);
+            StatusMessage = $"Showing artwork for : {beatmapImagesResult.StatusMessage}";
+        }
+        
     }
     
     public async Task SaveImageToDisk(IStorageFile saveFilePath, Bitmap bitmap)

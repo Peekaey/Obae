@@ -117,7 +117,7 @@
         </StackPanel>
         
         <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,5">
-          <TextBlock Text="Osu! Session Cookie Value" 
+          <TextBlock Text="Osu! Official Mirror Session Cookie Value" 
                      VerticalAlignment="Center"
                      HorizontalAlignment="Center"
                      Foreground="{DynamicResource PrimaryForegroundBrush}"

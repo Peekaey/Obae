@@ -29,4 +29,16 @@ public static class ApplicationExtensions
     
         return null;
     }
+
+    public static string GetMapNameFromOsuDirectRequestUri(this string requestUri)
+    {
+        if (string.IsNullOrEmpty(requestUri))
+        {
+            return string.Empty;
+        }
+
+        var splitFromBaseUrl = requestUri.Split("osz/");
+        var splitFromEnd = splitFromBaseUrl[1].Split(".osz");
+        return splitFromEnd[0];
+    }
 }

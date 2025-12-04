@@ -1,18 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
+using Obae.Helpers;
 using Obae.Interfaces;
 using Obae.Models;
+using Cookie = Microsoft.Playwright.Cookie;
 
 namespace Obae.Services;
 
-public class PlaywrightService : IPlaywrightService
+public class DownloadService : IDownloadService
 {
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public async Task<PlaywrightServiceResult> DownloadBeatmap(string url, UserCookie userCookie, string downloadPath)
+    public DownloadService(IHttpClientFactory httpClientFactory)
+    {
+        _httpClientFactory = httpClientFactory;
+    }
+
+    public async Task<DownloadServiceResult> DownloadBeatmapFromOfficial(string url, UserCookie userCookie, string downloadPath)
     {
         var playwright = await Playwright.CreateAsync();
         IBrowser? browser = null;
@@ -27,7 +36,7 @@ public class PlaywrightService : IPlaywrightService
         }
         catch (Exception e)
         {
-            return PlaywrightServiceResult.AsFailure("Crashed when attempting to launch chromium browser. Please ensure that Playwright has been installed correctly" +
+            return DownloadServiceResult.AsFailure("Crashed when attempting to launch chromium browser. Please ensure that Playwright has been installed correctly" +
                                                      "and that the Playwright.ps1 script has been executed - https://playwright.dev/dotnet/docs/intro");
         }
 
@@ -64,7 +73,7 @@ public class PlaywrightService : IPlaywrightService
 
         if (initialResponse.Status == 404)
         {
-            return PlaywrightServiceResult.AsFailure("Beatmap not found");
+            return DownloadServiceResult.AsFailure("Beatmap not found");
         }
         
         var element = await page.QuerySelectorAsync("a.btn-osu-big.btn-osu-big--beatmapset-header");
@@ -74,7 +83,7 @@ public class PlaywrightService : IPlaywrightService
         }
         else
         {
-            return PlaywrightServiceResult.AsFailure("Unable to find download button. Check cookie value");
+            return DownloadServiceResult.AsFailure("Unable to find download button. Check cookie value");
         }
         
         // Click Download Button to Trigger
@@ -89,7 +98,7 @@ public class PlaywrightService : IPlaywrightService
         using var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
         if (!response.IsSuccessStatusCode)
         {
-            return PlaywrightServiceResult.AsFailure("Failed to download beatmap");
+            return DownloadServiceResult.AsFailure("Failed to download beatmap");
         }
             
         var headerFileName = response.Content.Headers.ContentDisposition?.FileName.Replace("\"", "") ?? "beatmap.zip";
@@ -101,13 +110,60 @@ public class PlaywrightService : IPlaywrightService
                 await response.Content.CopyToAsync(fileStream);
                 await fileStream.FlushAsync(); // Ensure the file stream is flushed
                 await browser.CloseAsync();
-                return PlaywrightServiceResult.AsSuccess(combinedDownloadPath, Path.GetFileNameWithoutExtension(headerFileName));
+                return DownloadServiceResult.AsSuccess(combinedDownloadPath, Path.GetFileNameWithoutExtension(headerFileName));
             }
         }
         catch (Exception e)
         {
             await browser.CloseAsync();
-            return new PlaywrightServiceResult(false, e.Message);
+            return new DownloadServiceResult(false, e.Message);
         }
+    }
+
+    public async Task<DownloadServiceResult> DownloadBeatmapFromThirdParty(string url, string downloadPath)
+    {
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+            var httpClient = _httpClientFactory.CreateClient();
+            var response = await httpClient.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return DownloadServiceResult.AsFailure("Beatmap not found");
+                }
+                else
+                {
+                    return DownloadServiceResult.AsFailure("Failed to download beatmap");
+                }
+            }
+
+            var headerFileName = response.Content.Headers.ContentDisposition?.FileName.Replace("\"", "") ??
+                                 response.RequestMessage.RequestUri.ToString().GetMapNameFromOsuDirectRequestUri();
+            
+            var combinedDownloadPath = Path.Combine(downloadPath, headerFileName);
+            try 
+            {
+                await using (var fileStream = new FileStream(combinedDownloadPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await response.Content.CopyToAsync(fileStream);
+                    await fileStream.FlushAsync(); // Ensure the file stream is flushed
+                    return DownloadServiceResult.AsSuccess(combinedDownloadPath, Path.GetFileNameWithoutExtension(headerFileName));
+                }
+            }
+            catch (Exception e)
+            {
+                return new DownloadServiceResult(false, e.Message);
+            }
+        }
+        catch (Exception e)
+        {
+            return DownloadServiceResult.AsFailure(e.Message);
+        }
+
+
     }
 }

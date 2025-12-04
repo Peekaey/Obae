@@ -64,8 +64,7 @@ public partial class App : Application
             });
         services.AddSingleton<IBeatmapService, BeatmapService>();
         services.AddSingleton<IFileService, FileService>();
-        services.AddSingleton<IValidationHelper, ValidationHelper>();
-        services.AddSingleton<IPlaywrightService, PlaywrightService>();
+        services.AddSingleton<IDownloadService, DownloadService>();
         services.AddSingleton<IImageHelpers, ImageHelpers>();
         services.AddSingleton<IDataService, DataService>();
         services.AddDbContext<DataContext>(options => options.UseSqlite("Data Source=obae-app.db"));
