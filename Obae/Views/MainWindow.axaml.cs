@@ -63,7 +63,7 @@ public partial class MainWindow : Window
     private void RenderSettingsPage(object? sender, Avalonia.Interactivity.RoutedEventArgs eventArgs)
     {
         var appSettings = App.ServiceProvider.GetRequiredService<CachedAppSettings>();
-        var fileService = App.ServiceProvider.GetRequiredService<IFileService>();
+        var fileService = App.ServiceProvider.GetRequiredService<IFileSystemService>();
         var dataService = App.ServiceProvider.GetRequiredService<IDataService>();
         var settingsViewModel = new SettingsWindowViewModel(appSettings, fileService, dataService);
         var settingsWindow = new SettingsWindow
@@ -74,56 +74,47 @@ public partial class MainWindow : Window
         settingsWindow.ShowDialog(this);
     }
 
-    private void GetBeatmapForDownload(object sender, KeyEventArgs e)
+    private async void GetBeatmapForDownload(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter)
+        try
         {
-            var textBox = sender as TextBox;
-            if (textBox != null)
+            if (e.Key == Key.Enter)
             {
-                string userInput = textBox.Text;
-                var downloadResult = ViewModel.DownloadBeatmap(userInput);
+                var textBox = sender as TextBox;
+                if (textBox != null)
+                {
+                    string userInput = textBox.Text;
+                    ViewModel.DownloadBeatmap(userInput);
+                }
             }
+        }
+        catch (Exception error)
+        {
+            // Swallow for now
         }
     }
     
-    public async void SaveImageToDisk(object? sender, RoutedEventArgs e)
+    public async void SaveImageToDisk_MenuItem(object? sender, RoutedEventArgs e)
     {
         try
         {
             // Image Nested Object is MenuItem > Parent > Parent > Image with ImageData being in Image.Source as Bitmap
-            if (sender is MenuItem menuItem &&
-                menuItem.Parent is ContextMenu contextMenu &&
-                contextMenu.Parent is Popup popup &&
-                popup.Parent is Image image)
+            if (sender is MenuItem menuItem && menuItem.Parent is ContextMenu contextMenu && contextMenu.Parent is Popup popup && popup.Parent is Image image)
             {
                 // Image.Source is final Image
                 if (image.Source is Bitmap bitmap)
                 {
-                    var locationSavePrompt = new FilePickerSaveOptions
-                    {
-                        Title = "Save As",
-                        SuggestedFileName = "osu-artwork",
-                        FileTypeChoices = new[]
-                        {
-                            new FilePickerFileType("PNG Image") { Patterns = new[] { "*.png" } },
-                            new FilePickerFileType("JPEG Image") { Patterns = new[] { "*.jpg", "*.jpeg" } },
-                            new FilePickerFileType("All Files") { Patterns = new[] { "*.*" } }
-                        }
-                    };
-
-                    var filePickerResult = await StorageProvider.SaveFilePickerAsync(locationSavePrompt);
-                    ViewModel.SaveImageToDisk(filePickerResult, bitmap);
+                    await ViewModel.SaveImageToDisk(bitmap);
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving image: {ex.Message}");
+            // Swallow for now
         }
     }
 
-    public async void CopyImageToClipboard(object? sender, RoutedEventArgs e)
+    public async void CopyImageToClipboard_MenuItem(object? sender, RoutedEventArgs e)
     {
         try
         {
@@ -134,39 +125,13 @@ public partial class MainWindow : Window
             {
                 if (image.Source is Bitmap bitmap)
                 {
-                    var topLevel = Application.Current.GetTopLevel();
-                    var clipboard = topLevel?.Clipboard;
-                    if (clipboard != null)
-                    {
-                        using var memoryStream = new MemoryStream();
-                        bitmap.Save(memoryStream);
-                        memoryStream.Position = 0;
-                        var bytes = memoryStream.ToArray();
-
-                        var dataObject = new DataObject();
-
-                        // Add multiple formats for cross-platform compatibility
-                        if (OperatingSystem.IsMacOS())
-                        {
-                            dataObject.Set("public.png", bytes);
-                        }
-                        else if (OperatingSystem.IsWindows())
-                        {
-                            dataObject.Set("PNG", bytes);
-                        }
-                        else
-                        {
-                            dataObject.Set("image/png", bytes);
-                        }
-
-                        await clipboard.SetDataObjectAsync(dataObject);
-                    }
+                    ViewModel.CopyImageToClipboard(bitmap);
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving image: {ex.Message}");
+            // Swallow for now
         }
     }
     

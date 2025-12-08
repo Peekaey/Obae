@@ -9,6 +9,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Input;
@@ -23,14 +24,14 @@ public partial class MainWindowViewModel : ViewModelBase , INotifyPropertyChange
     private readonly IBeatmapService _beatmapService;
     private readonly IImageHelpers _imageHelpers;
     private readonly CachedAppSettings _cachedAppSettings;
-    private readonly IFileService _fileService;
+    private readonly IFileSystemService _fileSystemService;
     
-    public MainWindowViewModel(IBeatmapService beatmapService, CachedAppSettings cachedAppSettings, IImageHelpers imageHelpers, IFileService fileService)
+    public MainWindowViewModel(IBeatmapService beatmapService, CachedAppSettings cachedAppSettings, IImageHelpers imageHelpers, IFileSystemService fileSystemService)
     {
         _beatmapService = beatmapService;
         _cachedAppSettings = cachedAppSettings;
         _imageHelpers = imageHelpers;
-        _fileService = fileService;
+        _fileSystemService = fileSystemService;
         IsBusy = false;
     }
     public string BeatmapId { get; set; }
@@ -81,13 +82,13 @@ public partial class MainWindowViewModel : ViewModelBase , INotifyPropertyChange
         
         var beatmapId = userInput.ValidateBeatmapInput();
 
-        if (beatmapId == null)
+        if (string.IsNullOrEmpty(beatmapId))
         {
             StatusMessage = "Invalid Beatmap ID or Beatmap link provided!";
         }
 
             
-        var beatmapImagesResult = await _beatmapService.DownloadBeatmap(beatmapId, _cachedAppSettings.DefaultFolderPath, _cachedAppSettings.OsuCookieValue);
+        var beatmapImagesResult = await _beatmapService.DownloadBeatmapOrchestrator(beatmapId, _cachedAppSettings.DefaultFolderPath, _cachedAppSettings.OsuCookieValue);
 
         if (beatmapImagesResult.Success == false)
         {
@@ -112,7 +113,7 @@ public partial class MainWindowViewModel : ViewModelBase , INotifyPropertyChange
     
     public async Task SaveImageToDisk(IStorageFile saveFilePath, Bitmap bitmap)
     {
-        _fileService.SaveImageToDisk(saveFilePath, bitmap);
+        await _fileSystemService.SaveImageToDisk(saveFilePath, bitmap);
     }
     
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -121,5 +122,55 @@ public partial class MainWindowViewModel : ViewModelBase , INotifyPropertyChange
         Console.WriteLine($"Property changed: {propertyName} to {GetType().GetProperty(propertyName)?.GetValue(this)}");
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
+
+    public async Task SaveImageToDisk(Bitmap bitmap)
+    {
+        var locationSavePrompt = new FilePickerSaveOptions
+        {
+            Title = "Save As",
+            SuggestedFileName = "osu-artwork",
+            FileTypeChoices = new[]
+            {
+                new FilePickerFileType("PNG Image") { Patterns = new[] { "*.png" } },
+                new FilePickerFileType("JPEG Image") { Patterns = new[] { "*.jpg", "*.jpeg" } },
+                new FilePickerFileType("All Files") { Patterns = new[] { "*.*" } }
+            }
+        };
+        
+        var filePickerResult = await Application.Current.GetTopLevel().StorageProvider.SaveFilePickerAsync(locationSavePrompt);
+        await SaveImageToDisk(filePickerResult, bitmap);
+    }
+
+    public async Task CopyImageToClipboard(Bitmap bitmap)
+    {
+        var topLevel = Application.Current.GetTopLevel();
+        var clipboard = topLevel?.Clipboard;
+        if (clipboard != null)
+        {
+            using var memoryStream = new MemoryStream();
+            bitmap.Save(memoryStream);
+            memoryStream.Position = 0;
+            var bytes = memoryStream.ToArray();
+
+            var dataObject = new DataObject();
+
+            // Add multiple formats for cross-platform compatibility
+            if (OperatingSystem.IsMacOS())
+            {
+                dataObject.Set("public.png", bytes);
+            }
+            else if (OperatingSystem.IsWindows())
+            {
+                dataObject.Set("PNG", bytes);
+            }
+            else
+            {
+                dataObject.Set("image/png", bytes);
+            }
+
+            await clipboard.SetDataObjectAsync(dataObject);
+        }
+    }
+    
     
 }

@@ -5,14 +5,16 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using Obae.Helpers;
 using Obae.Interfaces;
 using Obae.Models;
 
 namespace Obae.Services;
 
-public class FileService : IFileService
+public class FileSystemSystemService : IFileSystemService
 {
     
     public ServiceResult CreateWorkingDirectory(string folderPath)
@@ -136,4 +138,17 @@ public class FileService : IFileService
             return FileSaveResult.AsFileSaveFailure(e.Message);
         }
     }
+    
+    public async Task<string?> ShowFolderPickerAsync()
+    {
+        var folders = await Application.Current.GetTopLevel().StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Select Working Directory Folder",
+            AllowMultiple = false
+        });
+
+        return folders.Count > 0 ? folders[0].Path.LocalPath : null;
+    }
+    
+        
 }

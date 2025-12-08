@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
 using Obae.Helpers;
@@ -21,14 +22,15 @@ public class DownloadService : IDownloadService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<DownloadServiceResult> DownloadBeatmapFromOfficial(string url, UserCookie userCookie, string downloadPath)
-    {
-        var playwright = await Playwright.CreateAsync();
+public async Task<DownloadServiceResult> DownloadBeatmapFromOfficial(string url, UserCookie userCookie, string downloadPath)
+{
+    IPlaywright? playwright = null;
         IBrowser? browser = null;
         //TODO If application hangs on Downloading Beatmap, Playwright probably not been ininitialised properly
         //Ensure that that playwright.ps1 script is executed - install powershell if on macos to execute
         try
         {
+            playwright = await Playwright.CreateAsync();
             browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
                 Headless = true
@@ -120,50 +122,73 @@ public class DownloadService : IDownloadService
         }
     }
 
-    public async Task<DownloadServiceResult> DownloadBeatmapFromThirdParty(string url, string downloadPath)
+    public async Task<DownloadServiceResult> DownloadBeatmapFromThirdParty(string url, string downloadPath, CancellationToken cancellationToken = default)
     {
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
 
             var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.SendAsync(request);
+            var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
+            // Handle specific HTTP status codes
             if (!response.IsSuccessStatusCode)
             {
-                if (response.StatusCode == HttpStatusCode.NotFound)
+                return response.StatusCode switch
                 {
-                    return DownloadServiceResult.AsFailure("Beatmap not found");
-                }
-                else
-                {
-                    return DownloadServiceResult.AsFailure("Failed to download beatmap");
-                }
+                    HttpStatusCode.NotFound => 
+                        DownloadServiceResult.AsFailure("Beatmap not found (404)"),
+                
+                    HttpStatusCode.Forbidden => DownloadServiceResult.AsFailure("Access forbidden (403) - Mirror may require authentication"),
+                
+                    HttpStatusCode.Unauthorized => DownloadServiceResult.AsFailure("Unauthorized (401) - Check credentials"),
+                
+                    HttpStatusCode.TooManyRequests => DownloadServiceResult.AsFailure("Rate limited (429) - Too many requests, try again later"),
+                
+                    HttpStatusCode.ServiceUnavailable => DownloadServiceResult.AsFailure("Service unavailable (503) - Mirror server is down"),
+                
+                    HttpStatusCode.GatewayTimeout => DownloadServiceResult.AsFailure("Gateway timeout (504) - Mirror server took too long to respond"),
+                
+                    HttpStatusCode.BadRequest => DownloadServiceResult.AsFailure("Bad request (400) - Invalid beatmap ID or URL"),
+                
+                    HttpStatusCode.InternalServerError => DownloadServiceResult.AsFailure("Server error (500) - Mirror server encountered an error"),
+                
+                    _ => DownloadServiceResult.AsFailure($"Failed to download beatmap (HTTP {(int)response.StatusCode})")
+                };
             }
 
             var headerFileName = response.Content.Headers.ContentDisposition?.FileName.Replace("\"", "") ??
-                                 response.RequestMessage.RequestUri.ToString().GetMapNameFromOsuDirectRequestUri();
-            
+                                 response.RequestMessage?.RequestUri?.ToString().GetMapNameFromOsuDirectRequestUri() ??
+                                 "beatmap.osz";
+    
             var combinedDownloadPath = Path.Combine(downloadPath, headerFileName);
-            try 
+        
+            await using (var fileStream = new FileStream(combinedDownloadPath, FileMode.Create, FileAccess.Write, FileShare.None))
             {
-                await using (var fileStream = new FileStream(combinedDownloadPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    await response.Content.CopyToAsync(fileStream);
-                    await fileStream.FlushAsync(); // Ensure the file stream is flushed
-                    return DownloadServiceResult.AsSuccess(combinedDownloadPath, Path.GetFileNameWithoutExtension(headerFileName));
-                }
+                await response.Content.CopyToAsync(fileStream, cancellationToken);
+                await fileStream.FlushAsync(cancellationToken);
             }
-            catch (Exception e)
-            {
-                return new DownloadServiceResult(false, e.Message);
-            }
+        
+            return DownloadServiceResult.AsSuccess(
+                combinedDownloadPath, 
+                Path.GetFileNameWithoutExtension(headerFileName)
+            );
         }
-        catch (Exception e)
+        catch (HttpRequestException ex)
         {
-            return DownloadServiceResult.AsFailure(e.Message);
+            return DownloadServiceResult.AsFailure($"Network error: {ex.Message}");
         }
-
-
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            return DownloadServiceResult.AsFailure("Download timed out");
+        }
+        catch (IOException ex)
+        {
+            return DownloadServiceResult.AsFailure($"File system error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return DownloadServiceResult.AsFailure($"Unexpected error: {ex.Message}");
+        }
     }
 }

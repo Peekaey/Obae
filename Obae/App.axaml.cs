@@ -51,23 +51,13 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
         services.AddSingleton(new CookieContainer());
-        services.AddSingleton<IApiManagerService, ApiManagerService>();
-        services.AddHttpClient<ApiManagerService>()
-            .ConfigurePrimaryHttpMessageHandler(sp =>
-            {
-                return new HttpClientHandler
-                {
-                    AllowAutoRedirect = false,
-                    CookieContainer = sp.GetRequiredService<CookieContainer>(),
-                    UseCookies = true,
-                };
-            });
         services.AddSingleton<IBeatmapService, BeatmapService>();
-        services.AddSingleton<IFileService, FileService>();
+        services.AddSingleton<IFileSystemService, FileSystemSystemService>();
         services.AddSingleton<IDownloadService, DownloadService>();
         services.AddSingleton<IImageHelpers, ImageHelpers>();
         services.AddSingleton<IDataService, DataService>();
-        services.AddDbContext<DataContext>(options => options.UseSqlite("Data Source=obae-app.db"));
+        services.AddHttpClient();
+        services.AddDbContext<DataContext>(dbOptions => dbOptions.UseSqlite(Services.DataContext.GetConnectionString()));
 
         services.AddSingleton<CachedAppSettings>();
         
@@ -137,6 +127,7 @@ public partial class App : Application
                 var defaultMirrorSources = new List<MirrorSources>
                 {
                     MirrorSources.Nerinyan,
+                    MirrorSources.OsuDirect,
                     MirrorSources.BeatConnect,
                 };
 

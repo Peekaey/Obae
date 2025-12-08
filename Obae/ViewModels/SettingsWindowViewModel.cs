@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Obae.Interfaces;
 using Obae.Models;
@@ -14,13 +15,13 @@ namespace Obae.ViewModels;
 public class SettingsWindowViewModel : ViewModelBase , INotifyPropertyChanged
 {
         private readonly CachedAppSettings _cachedAppSettings;
-        private readonly IFileService _fileService;
+        private readonly IFileSystemService _fileSystemService;
         private readonly IDataService _dataService;
     
-    public SettingsWindowViewModel(CachedAppSettings cachedAppSettings, IFileService fileService , IDataService dataService)
+    public SettingsWindowViewModel(CachedAppSettings cachedAppSettings, IFileSystemService fileSystemService , IDataService dataService)
     {
         _cachedAppSettings = cachedAppSettings;
-        _fileService = fileService;
+        _fileSystemService = fileSystemService;
         _dataService = dataService;
         
         // Populate available themes
@@ -121,5 +122,20 @@ public class SettingsWindowViewModel : ViewModelBase , INotifyPropertyChanged
         {
             _dataService.SaveSettingsToDatabase(_cachedAppSettings);
         }
+    }
+
+    public async Task BrowseFolderButtonAsync()
+    {
+        var folder = await _fileSystemService.ShowFolderPickerAsync();
+        if (folder != null)
+        {
+            _cachedAppSettings.DefaultFolderPath = folder;
+        }
+    }
+
+    public async Task ClearOsuCookieSessionValue()
+    {
+        _cachedAppSettings.OsuCookieValue = string.Empty;
+        OnPropertyChanged(nameof(OsuSessionCookieValue));
     }
 }

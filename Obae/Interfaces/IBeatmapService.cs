@@ -7,5 +7,5 @@ namespace Obae.Interfaces;
 
 public interface IBeatmapService
 {
-    Task<DownloadResult> DownloadBeatmap(string beatmapId, string defaultFolderPath, string cookie);
+    Task<DownloadResult> DownloadBeatmapOrchestrator(string beatmapId, string defaultFolderPath, string cookie);
 }
