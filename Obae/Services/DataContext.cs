@@ -14,6 +14,28 @@ public class DataContext : DbContext
 {
     public DbSet<AppSettings> AppSettings { get; set; }
     
+    /// <summary>
+    /// Gets the database path from environment variable or returns default path.
+    /// On macOS bundle, OBAE_DB_PATH is set by the launcher script to ~/Library/Application Support/Obae/obae-app.db
+    /// Set by the build script
+    /// </summary>
+    public static string GetDatabasePath()
+    {
+        var envPath = Environment.GetEnvironmentVariable("OBAE_DB_PATH");
+        if (!string.IsNullOrEmpty(envPath))
+        {
+            return envPath;
+        }
+        
+        // Fallback/original
+        return "obae-app.db";
+    }
+    
+    public static string GetConnectionString()
+    {
+        return $"Data Source={GetDatabasePath()}";
+    }
+    
     public DataContext(DbContextOptions<DataContext> options) : base(options)
     {
     }
@@ -22,8 +44,7 @@ public class DataContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            // Fallback connection string if not configured via DI
-            optionsBuilder.UseSqlite("Data Source=obae-app.db");
+            optionsBuilder.UseSqlite(GetConnectionString());
         }
     }
 
