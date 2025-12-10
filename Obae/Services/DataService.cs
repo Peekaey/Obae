@@ -31,9 +31,16 @@ public class DataService : IDataService
                 // -- Seeded at initial launch if it doesn't exist
                 var existingSettings = await _dataContext.AppSettings.FirstOrDefaultAsync();
 
+                if (string.IsNullOrEmpty(cachedAppSettings.OsuCookieValue))
+                {
+                    existingSettings.OsuCookieValue = string.Empty;
+                }
+                else
+                {
+                    existingSettings.OsuCookieValue = EncryptionHelper.Encrypt(cachedAppSettings.OsuCookieValue,cachedAppSettings.EncryptionKeyByteArray).EncryptedData;
+                }
+                
                 existingSettings.SelectedTheme = cachedAppSettings.SelectedTheme;
-                // TODO Scramble CookieValue before storing and unscramble upon read
-                existingSettings.OsuCookieValue = cachedAppSettings.OsuCookieValue;
                 existingSettings.DefaultFolderPath = cachedAppSettings.DefaultFolderPath;
                 existingSettings.SaveSettingsToDatabase = cachedAppSettings.SaveSettingsToDatabase;
                 existingSettings.LastUpdatedUtc = DateTime.UtcNow;

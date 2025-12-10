@@ -86,7 +86,6 @@ public class FileSystemSystemService : IFileSystemService
             {
                 // Check if the entry's name ends with .png or .jpg (case-insensitive)
                 // && Skip Lyric Folder
-                // TODO Check if more efficient way to skip lyric folder
 
                 if (entry.FullName.ToLower().Contains("sb/") && !entry.FullName.ToLower().Contains("bg/"))
                 {

@@ -98,10 +98,21 @@ public partial class App : Application
             if (dbSettings != null)
             {
                 cachedSettings.DefaultFolderPath = dbSettings.DefaultFolderPath;
-                cachedSettings.OsuCookieValue = dbSettings.OsuCookieValue ?? string.Empty;
                 cachedSettings.SaveSettingsToDatabase = dbSettings.SaveSettingsToDatabase;
                 cachedSettings.SelectedTheme = dbSettings.SelectedTheme;
                 cachedSettings.SelectedMirrorSources = dbSettings.SelectedMirrorSources;
+                if (!string.IsNullOrEmpty(dbSettings.OsuCookieValue))
+                {
+                    var encryptionResult = new EncryptionResult
+                    {
+                        EncryptedData = dbSettings.OsuCookieValue,
+                    };
+                    cachedSettings.OsuCookieValue = EncryptionHelper.Decrypt(encryptionResult, cachedSettings.EncryptionKeyByteArray);
+                }
+                else
+                {
+                    cachedSettings.OsuCookieValue = string.Empty;
+                }
             }
         }
     }

@@ -26,7 +26,7 @@ public async Task<DownloadServiceResult> DownloadBeatmapFromOfficial(string url,
 {
     IPlaywright? playwright = null;
         IBrowser? browser = null;
-        //TODO If application hangs on Downloading Beatmap, Playwright probably not been ininitialised properly
+        //If application hangs on Downloading Beatmap, Playwright probably not been ininitialised properly
         //Ensure that that playwright.ps1 script is executed - install powershell if on macos to execute
         try
         {
@@ -39,7 +39,7 @@ public async Task<DownloadServiceResult> DownloadBeatmapFromOfficial(string url,
         catch (Exception e)
         {
             return DownloadServiceResult.AsFailure("Crashed when attempting to launch chromium browser. Please ensure that Playwright has been installed correctly" +
-                                                     "and that the Playwright.ps1 script has been executed - https://playwright.dev/dotnet/docs/intro");
+                                                     "and that the playwright.ps1 script has been executed - https://playwright.dev/dotnet/docs/intro");
         }
 
         // Create a new context
