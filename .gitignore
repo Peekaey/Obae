@@ -10,4 +10,4 @@ package.json
 .DS_Store
 /.playwright-tool
 /dist
-scripts/
+/Scripts/dist

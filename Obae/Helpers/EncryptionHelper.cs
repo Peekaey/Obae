@@ -8,7 +8,8 @@ using Obae.Models;
 // Modified version with a hardcoded Encryption Key
 // Threat model is low and is too much work to implement secure crypto storage uniquely for each platform
 // Therefore just casually encrypt the session token so that the database value can't be read casually without 
-// The application decrypting it during runtime
+// The application decrypting it during runtime 
+// Sourcecode is also public and don't want to deal with hosting an encryption key
 public class EncryptionHelper
 {
     private const int KeySize = 256;
